@@ -1,0 +1,12 @@
+\contentsline {section}{\numberline {1}引言}{2}{section.1}%
+\contentsline {section}{\numberline {2}严格 2-范畴的严谨定义}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}0-细胞：对象类}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}1-细胞与 2-细胞：态射范畴}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}垂直合成（Vertical Composition）}{2}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}水平合成（Horizontal Composition）}{3}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}核心公理：互换律（Interchange Law）}{3}{subsection.2.5}%
+\contentsline {section}{\numberline {3}2-范畴中的“伴随”严格定义}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}三角恒等式（Triangle Identities）}{4}{subsection.3.1}%
+\contentsline {section}{\numberline {4}终极证明：从 2-范畴伴随到经典 Hom-双射}{4}{section.4}%
+\contentsline {section}{\numberline {5}结论与洞察}{6}{section.5}%
+\contentsline {section}{\numberline {A}关键概念速查}{7}{appendix.A}%

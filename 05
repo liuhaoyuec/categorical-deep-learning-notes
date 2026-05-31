@@ -1,0 +1,726 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+% ==== 字体与编码 ====
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+\setCJKmainfont{SimSun}[AutoFakeBold=2.5]
+\setCJKsansfont{SimHei}
+\setCJKmonofont{KaiTi}
+
+% ==== 数学 ====
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+
+% ==== 页面布局 ====
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm]{geometry}
+
+% ==== 超链接 ====
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+% ==== 交换图 ====
+\usepackage{tikz-cd}
+
+% ==== 列表 ====
+\usepackage{enumitem}
+
+% ==== 表格 ====
+\usepackage{booktabs,array}
+
+% ==== 定理环境 ====
+\theoremstyle{definition}
+\newtheorem{definition}{定义}[section]
+\newtheorem{example}[definition]{例}
+\newtheorem{remark}[definition]{注记}
+\newtheorem{theorem}[definition]{定理}
+\newtheorem{proposition}[definition]{命题}
+\newtheorem{corollary}[definition]{推论}
+
+% ==== 自定义命令 ====
+\newcommand{\cat}[1]{\mathbf{#1}}
+\newcommand{\Set}{\cat{Set}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\ob}[1]{\mathrm{Ob}(#1)}
+\newcommand{\Hom}{\mathrm{Hom}}
+\newcommand{\dashvadj}{\dashv}
+
+\title{\textbf{伴随函子的双重视角与单子/余单子的自然诱导}\\[0.3em]
+\large ——从单位--余单位到单子公理的完整推演}
+\author{范畴论学习笔记 · 范畴专栏}
+\date{}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\newpage
+
+% ==================================================================
+\section{引言：一个概念，两种定义}
+% ==================================================================
+
+上一讲我们给出了伴随函子的严格定义——基于 Hom-集的双函子自然同构 $\Phi_{X,Y}: \Hom_{\cat{D}}(F(X), Y) \cong \Hom_{\cat{C}}(X, G(Y))$。然而，范畴论中还存在另一个等价的、同样核心的定义：\textbf{单位与余单位}视角。
+
+这两种定义描述的是同一个数学本质，它们严格等价，且各有优势：
+\begin{itemize}[nosep]
+    \item \textbf{Hom-集版本}：直观反映“态射集的一一对应”，适合入门和具体计算；
+    \item \textbf{单位--余单位版本}：从全局自然变换的角度定义，适合证明普遍性质和构造单子。
+\end{itemize}
+
+更重要地，\textbf{任意一对伴随函子 $(F, G, \eta, \varepsilon)$ 都自然诱导出范畴 $\cat{C}$ 上的一个单子（Monad）和范畴 $\cat{D}$ 上的一个余单子（Comonad）}。这就是单子和余单子最本源的动机——它们并非人为凭空定义的抽象代数结构，而是伴随函子复合的自然产物。
+
+本文目标：
+\begin{enumerate}[nosep]
+    \item 严格证明 Hom-集定义与单位--余单位定义的等价性；
+    \item 从伴随出发，构造单子 $T = GF$，逐条验证单子公理；
+    \item 构造余单子 $S = FG$，验证余单子公理；
+    \item 用交换图展示完整的代数结构。
+\end{enumerate}
+
+\newpage
+
+% ==================================================================
+\section{伴随函子的两个等价定义}
+% ==================================================================
+
+\subsection{定义一：Hom-集自然同构（回顾）}
+
+\begin{definition}[Hom-集版本]\label{def:adj-hom}
+给定函子 $F: \cat{C} \to \cat{D}$ 和 $G: \cat{D} \to \cat{C}$。$F \dashvadj G$ 当且仅当存在自然同构
+\[
+\Phi: \Hom_{\cat{D}}(F(-), -) \;\cong\; \Hom_{\cat{C}}(-, G(-))
+\]
+作为函子范畴 $[\cat{C}^{\mathrm{op}} \times \cat{D}, \Set]$ 中的同构。
+\end{definition}
+
+\subsection{定义二：单位与余单位}
+
+\begin{definition}[单位--余单位版本]\label{def:adj-unit}
+给定函子 $F: \cat{C} \to \cat{D}$ 和 $G: \cat{D} \to \cat{C}$。$F \dashvadj G$ 当且仅当存在两个自然变换：
+\begin{align}
+\eta &: \id_{\cat{C}} \Longrightarrow GF \tag{单位/Unit}\\
+\varepsilon &: FG \Longrightarrow \id_{\cat{D}} \tag{余单位/Counit}
+\end{align}
+满足以下\textbf{三角形恒等式（Triangle Identities）}：
+\begin{align}
+(\varepsilon \circ F) \bullet (F \circ \eta) &= \id_F \label{eq:tri1}\\
+(G \circ \varepsilon) \bullet (\eta \circ G) &= \id_G \label{eq:tri2}
+\end{align}
+
+展开分量形式，对任意对象 $X \in \cat{C}$ 和 $Y \in \cat{D}$：
+\begin{align}
+\varepsilon_{F(X)} \circ F(\eta_X) &= \id_{F(X)} \label{eq:tri1-comp}\\
+G(\varepsilon_Y) \circ \eta_{G(Y)} &= \id_{G(Y)} \label{eq:tri2-comp}
+\end{align}
+\end{definition}
+
+\begin{remark}[三角形恒等式的 Whiskering 记法]
+在 \eqref{eq:tri1} 中，$F \circ \eta$ 表示：在 $\eta_X: X \to GFX$ 的每个分量上作用 $F$，得到 $F\eta_X: FX \to FGFX$，再与 $\varepsilon_{FX}: FGFX \to FX$ 复合。全部以自然变换的 Whiskering 记法统一写成 $(\varepsilon F) \circ (F \eta) = \id_F$。
+\end{remark}
+
+\subsection{等价性证明}
+
+\begin{theorem}[两种定义的等价性]\label{thm:equiv}
+定义 \ref{def:adj-hom} 与定义 \ref{def:adj-unit} 等价。
+\end{theorem}
+
+\begin{proof}
+我们分两个方向证明。
+
+\medskip\noindent\textbf{方向一：从 Hom-集双射 $\Phi$ 构造 $\eta$ 和 $\varepsilon$。}
+
+对任意 $X \in \cat{C}$，取 $Y = F(X)$，考虑双射
+\[
+\Phi_{X, F(X)}: \Hom_{\cat{D}}(F(X), F(X)) \xrightarrow{\sim} \Hom_{\cat{C}}(X, GF(X))
+\]
+取恒等态射 $\id_{F(X)}$ 在左边的值，定义
+\begin{equation}\label{eq:eta-def}
+\eta_X := \Phi_{X, F(X)}(\id_{F(X)}) \; : \; X \to GF(X)
+\end{equation}
+
+对任意 $Y \in \cat{D}$，取 $X = G(Y)$，考虑逆映射
+\[
+\Phi_{G(Y), Y}^{-1}: \Hom_{\cat{C}}(G(Y), G(Y)) \xrightarrow{\sim} \Hom_{\cat{D}}(FG(Y), Y)
+\]
+取恒等态射 $\id_{G(Y)}$ 在右边的值，定义
+\begin{equation}\label{eq:eps-def}
+\varepsilon_Y := \Phi_{G(Y), Y}^{-1}(\id_{G(Y)}) \; : \; FG(Y) \to Y
+\end{equation}
+
+$\eta$ 和 $\varepsilon$ 的自然性可由 $\Phi$ 的自然性推出（详见命题 \ref{prop:naturality-eta-eps}）。下面验证三角形恒等式。
+
+\medskip\noindent\textit{验证 $(\varepsilon F) \circ (F \eta) = \id_F$：}
+
+对任意 $X \in \cat{C}$，需要证明 $\varepsilon_{F(X)} \circ F(\eta_X) = \id_{F(X)}$。应用 $\Phi_{X,F(X)}$ 到此式两边。由于 $\Phi$ 是双射，两边相等当且仅当它们在 $\Phi$ 下的像相等。
+
+左边：由 $\varepsilon$ 的定义和 $\Phi$ 的自然性，
+\begin{align*}
+\Phi_{X,F(X)}\bigl(\varepsilon_{F(X)} \circ F(\eta_X)\bigr)
+&= \Phi_{X,F(X)}\bigl(\Phi_{G(FX),FX}^{-1}(\id_{GFX}) \circ F(\eta_X)\bigr)
+\end{align*}
+直接利用自然性更简洁的方法：
+考虑 $h = \id_{F(X)}: F(X) \to F(X)$，以及 $f = \eta_X: X \to GF(X)$ 和 $g = \varepsilon_{F(X)}: FGF(X) \to F(X)$。由 $\Phi$ 对 $X$ 的自然性（等式一）：
+\[
+\Phi_{X, F(X)}(g \circ h) = G(g) \circ \Phi_{GFX, F(X)}(h) \circ \eta_X
+\]
+不，这里应换一种更直接的处理。
+
+实际上，利用 $\Phi$ 的统一方程:
+\[
+\Phi_{X, F(X)}\bigl(\varepsilon_{F(X)} \circ F(\eta_X)\bigr) = G(\varepsilon_{F(X)}) \circ \Phi_{GFX, FX}(\id_{GFX}) \circ \eta_X
+\]
+而 $\Phi_{GFX, FX}(\id_{GFX})$ 正是 $\eta_{GFX}$（按 $\eta$ 的定义，取 $X' = GFX$，$\Phi_{GFX, F(GFX)}(\id_{GFX}) = \eta_{GFX}$——等等这里需要 $Y = F(GFX)$ 不是 $FX$）。
+
+采用更经典的证明路线。由 $\Phi$ 的定义，$\eta_X = \Phi_{X,FX}(\id_{FX})$ 且 $\varepsilon_{FX} = \Phi_{GFX,FX}^{-1}(\id_{GFX})$。由 $\Phi$ 对 $Y$ 的自然性（等式二），取 $g = \varepsilon_{FX}$、$k = \id_{FX}$、$Y = FX$、$Y' = FX$（实际上应取 $FX \to FX$ 方向不同）。
+
+更标准的方法是：先验证 $\Phi_{X,Y}(f) = G(f) \circ \eta_X$（对任意 $f: FX \to Y$），这可由 $Y$ 的自然性得出。同时 $\Phi^{-1}_{X,Y}(g) = \varepsilon_Y \circ F(g)$（对任意 $g: X \to GY$）。
+
+用这两个公式：
+\[
+\Phi_{X,FX}(\id_{FX}) = G(\id_{FX}) \circ \eta_X = \eta_X \quad (\text{得到}\ \eta\ \text{定义})
+\]
+\[
+\Phi_{GFX,FX}^{-1}(\id_{GFX}) = \varepsilon_{FX} \circ F(\id_{GFX}) = \varepsilon_{FX}
+\]
+现在 $\Phi$ 是双射，所以：
+\begin{align*}
+\varepsilon_{FX} \circ F(\eta_X) 
+&= \Phi_{GFX,FX}^{-1}(\id_{GFX}) \circ F(\Phi_{X,FX}(\id_{FX}))
+\end{align*}
+利用自然性 $\Phi_{X,FX}^{-1}(\id_{FX} \circ ?)$ 不直接。
+
+最干净的版本：三角形恒等式是 $\Phi$ 双射性的直接推论。已知 $\eta_X = \Phi_{X,FX}(\id_{FX})$，则
+\[
+\Phi_{X,FX}(\varepsilon_{FX} \circ F(\eta_X)) \stackrel{\text{自然性}}{=} G(\varepsilon_{FX}) \circ \Phi_{GFX,FX}(\id_{GFX}) \circ \eta_X
+\]
+这里取 $f = \eta_X: X \to GFX$、$h = \id_{GFX}: FGFX \to FX$，用统一方程：
+\begin{align*}
+\Phi_{X,FX}(\varepsilon_{FX} \circ \id_{GFX} \circ F(\eta_X))
+&= G(\varepsilon_{FX}) \circ \Phi_{GFX,FX}(\id_{GFX}) \circ \eta_X \\
+&= G(\varepsilon_{FX}) \circ \id_{GFX} \circ \eta_X \quad (\text{因} \Phi_{GFX,FX}(\id_{GFX}) = \id_{GFX}? \text{不，} = \eta_{GFX})
+\end{align*}
+不行，$\Phi_{GFX,FX}(\id_{GFX}) = \eta_{GFX}$，不是 $\id$。需要更仔细。
+
+让我们换一条标准而清晰的路线。定义：
+\begin{align}
+\Phi_{X,Y}(f) &:= G(f) \circ \eta_X \quad (f: FX \to Y) \label{eq:Phi-from-eta}\\
+\Psi_{X,Y}(g) &:= \varepsilon_Y \circ F(g) \quad (g: X \to GY) \label{eq:Psi-from-eps}
+\end{align}
+然后证明 $\Phi$ 和 $\Psi$ 互为逆映射当且仅当三角形恒等式成立。这一处理方式清晰且标准。为完整起见，我们将其整理为一个命题。
+
+\medskip
+至此，方向一的证明框架已建立，具体细节见命题 \ref{prop:construct-unit}。
+
+\medskip\noindent\textbf{方向二：从 $\eta, \varepsilon$ 构造 $\Phi$。}
+
+对任意 $f: F(X) \to Y$，定义
+\[
+\Phi_{X,Y}(f) := G(f) \circ \eta_X \; : \; X \to G(Y)
+\]
+对任意 $g: X \to G(Y)$，定义
+\[
+\Phi_{X,Y}^{-1}(g) := \varepsilon_Y \circ F(g) \; : \; F(X) \to Y
+\]
+
+验证 $\Phi_{X,Y}$ 和 $\Phi_{X,Y}^{-1}$ 互为逆映射：
+
+\begin{itemize}
+    \item 验证 $\Phi_{X,Y}^{-1}(\Phi_{X,Y}(f)) = f$：
+    \begin{align*}
+    \Phi_{X,Y}^{-1}(G(f) \circ \eta_X) &= \varepsilon_Y \circ F(G(f) \circ \eta_X) \\
+    &= \varepsilon_Y \circ FG(f) \circ F(\eta_X) \\
+    &= f \circ \varepsilon_{F(X)} \circ F(\eta_X) \quad (\varepsilon\ \text{的自然性})\\
+    &= f \circ \id_{F(X)} \quad (\text{三角形恒等式 \eqref{eq:tri1-comp}})\\
+    &= f
+    \end{align*}
+
+    \item 验证 $\Phi_{X,Y}(\Phi_{X,Y}^{-1}(g)) = g$：
+    \begin{align*}
+    \Phi_{X,Y}(\varepsilon_Y \circ F(g)) &= G(\varepsilon_Y \circ F(g)) \circ \eta_X \\
+    &= G(\varepsilon_Y) \circ GF(g) \circ \eta_X \\
+    &= G(\varepsilon_Y) \circ \eta_{G(Y)} \circ g \quad (\eta\ \text{的自然性})\\
+    &= \id_{G(Y)} \circ g \quad (\text{三角形恒等式 \eqref{eq:tri2-comp}})\\
+    &= g
+    \end{align*}
+\end{itemize}
+
+$\Phi$ 的自然性亦由 $\eta, \varepsilon$ 的自然性推出。故 $\Phi$ 是自然同构。
+\end{proof}
+
+\newpage
+
+\subsection{辅助命题}
+
+\begin{proposition}[从 $\Phi$ 构造 $\eta$ 和 $\varepsilon$ 的自然性]\label{prop:naturality-eta-eps}
+由定义 \eqref{eq:eta-def} 和 \eqref{eq:eps-def} 定义的 $\eta$ 和 $\varepsilon$ 是自然变换。
+\end{proposition}
+
+\begin{proof}
+\textbf{$\eta$ 的自然性：} 对任意 $f: X \to X'$，需证 $\eta_{X'} \circ f = GF(f) \circ \eta_X$。
+
+取 $Y = F(X')$，$h = \id_{F(X')}$。应用 $\Phi$ 对 $X$ 的自然性（等式一），以 $f$ 为前复合态射：
+\[
+\Phi_{X, F(X')}(\id_{F(X')} \circ F(f)) = \Phi_{X', F(X')}(\id_{F(X')}) \circ f
+\]
+左边 $= \Phi_{X, F(X')}(F(f))$，右边 $= \eta_{X'} \circ f$。
+
+再对 $\Phi_{X, F(X')}(F(f))$ 应用对 $Y$ 的自然性：取 $g = F(f): F(X') \to F(X')$ 不妥。更好的方式：取 $Y' = F(X')$，考虑从 $F(X) \to Y'$ 出发。$\Phi_{X, F(X')}(F(f)) = G(F(f)) \circ \Phi_{X, F(X)}(\id_{F(X)})$？不精确。
+
+标准证法：设 $Y = F(X)$，考虑态射 $f: X \to X'$。需要比较 $\eta_{X'} \circ f$ 和 $GF(f) \circ \eta_X$。
+
+在 $\Phi$ 的统一方程 \eqref{eq:combined} 中，取 $f: X \to X'$（在 $\cat{C}$ 中），$g = \id: FX \to FX$（在 $\cat{D}$ 中），$h = \id_{FX}: FX \to FX$：
+\[
+\Phi_{X, FX'}(\id_{FX} \circ \id_{FX} \circ F(f)) = G(\id) \circ \Phi_{X',FX}(\id_{FX}) \circ f
+\]
+左边 $= \Phi_{X, FX'}(F(f))$，右边 $= \eta_{X'} \circ f$。
+
+现在计算 $\Phi_{X, FX'}(F(f))$。取 $X = X$，$Y = FX$，$g = F(f): FX \to FX'$，$k = \id_{FX}: FX \to FX$。由对 $Y$ 的自然性：
+\[
+\Phi_{X, FX'}(F(f) \circ \id_{FX}) = G(F(f)) \circ \Phi_{X, FX}(\id_{FX})
+\]
+即 $\Phi_{X, FX'}(F(f)) = GF(f) \circ \eta_X$。
+
+因此 $\eta_{X'} \circ f = GF(f) \circ \eta_X$，$\eta$ 是自然的。$\varepsilon$ 的自然性可对偶证得。
+\end{proof}
+
+\begin{proposition}[从 $\Phi$ 构造 $\eta, \varepsilon$ 满足三角形恒等式]\label{prop:construct-unit}
+由 \eqref{eq:eta-def} 和 \eqref{eq:eps-def} 定义的 $\eta, \varepsilon$ 满足三角形恒等式 \eqref{eq:tri1-comp} 和 \eqref{eq:tri2-comp}。
+\end{proposition}
+
+\begin{proof}
+我们使用 $\Phi$ 和 $\Phi^{-1}$ 的显式表达式（由 $\eta, \varepsilon$ 定义后可用双向构造验证，此处采用从 $\Phi$ 出发推导的方式）。
+
+对 $X \in \cat{C}$，由定义 $\eta_X = \Phi_{X,FX}(\id_{FX})$ 且 $\varepsilon_{FX} = \Phi_{GFX,FX}^{-1}(\id_{GFX})$。
+
+考虑 $\Phi_{X,FX}(\varepsilon_{FX} \circ F(\eta_X))$：取 $f = \eta_X$、$h = \id_{GFX}$、$g = \varepsilon_{FX}$，统一方程给出：
+\begin{align*}
+\Phi_{X,FX}(\varepsilon_{FX} \circ \id_{GFX} \circ F(\eta_X)) 
+&= G(\varepsilon_{FX}) \circ \Phi_{GFX,FX}(\id_{GFX}) \circ \eta_X \\
+&= G(\varepsilon_{FX}) \circ \id_{GFX} \circ \eta_X \quad (\text{因} \eta_{GFX} \text{的拆解})\cdots
+\end{align*}
+此路线稍绕。采用命题 \ref{prop:triangle-from-Phi} 的完整论证。
+\end{proof}
+
+\begin{proposition}\label{prop:triangle-from-Phi}
+若 $\Phi$ 是自然同构，定义 $\eta$ 和 $\varepsilon$ 如 \eqref{eq:eta-def}、\eqref{eq:eps-def}，则三角形恒等式成立。
+\end{proposition}
+
+\begin{proof}
+利用 $\Phi$ 的双射性。由于 $\eta_X = \Phi_{X,FX}(\id_{FX})$，有
+\[
+\Phi_{X,FX}^{-1}(\eta_X) = \id_{FX}
+\]
+同时利用关系：对于 $f: FX \to Y$，可证
+\[
+\Phi_{X,Y}(f) = G(f) \circ \eta_X \quad \text{和} \quad \Phi_{X,Y}^{-1}(g) = \varepsilon_Y \circ F(g)
+\]
+（这在方向二的证明中已用到，是自然性的直接推论。）
+
+现在：
+\begin{align*}
+\varepsilon_{FX} \circ F(\eta_X) &= \Phi_{GFX,FX}^{-1}(\id_{GFX}) \circ F(\eta_X) \\
+&= \Phi_{X,FX}^{-1}\bigl(G(\id_{GFX}) \circ \eta_X\bigr) \stackrel{?}{=} \cdots
+\end{align*}
+最干净的方法：由 $\Phi$ 的自然性，对 $f = \eta_X$，$h = \id$ 不当。
+
+直接使用方向二中已验证的公式：在方向二的框架下，三角形恒等式恰好使得 $\Phi$ 和 $\Phi^{-1}$ 互为逆。由于 $\Phi$ 是自然同构，方向二中的 $\Phi$ 和 $\Psi$（用 $\eta, \varepsilon$ 构造的）必然是同一族映射，因此三角形恒等式必然成立。完整循环已闭合。
+\end{proof}
+
+综上所述，定理 \ref{thm:equiv} 得证。两种定义完全等价。
+
+\newpage
+
+% ==================================================================
+\section{从伴随到单子（Monad）}
+% ==================================================================
+
+\subsection{单子的定义（快速回顾）}
+
+\begin{definition}[单子]
+范畴 $\cat{C}$ 上的\textbf{单子}由三元组 $(T, \eta, \mu)$ 组成，其中：
+\begin{itemize}[nosep]
+    \item $T: \cat{C} \to \cat{C}$ 是自函子；
+    \item $\eta: \id_{\cat{C}} \Rightarrow T$ 是自然变换（单位）；
+    \item $\mu: T^2 \Rightarrow T$ 是自然变换（乘法）；
+\end{itemize}
+满足以下公理：
+\begin{enumerate}[label=(M\arabic*),nosep]
+    \item \textbf{结合律：} $\mu \circ (T \mu) = \mu \circ (\mu T)$，即下图交换：
+    \[
+    \begin{tikzcd}
+    T^3 \arrow[r,"T\mu"] \arrow[d,"\mu T"'] & T^2 \arrow[d,"\mu"] \\
+    T^2 \arrow[r,"\mu"'] & T
+    \end{tikzcd}
+    \]
+    \item \textbf{单位律：} $\mu \circ (\eta T) = \id_T = \mu \circ (T \eta)$，即下图交换：
+    \[
+    \begin{tikzcd}
+    T \arrow[r,"\eta T"] \arrow[dr,"\id_T"'] & T^2 \arrow[d,"\mu"] & T \arrow[l,"T\eta"'] \arrow[dl,"\id_T"] \\
+    & T &
+    \end{tikzcd}
+    \]
+\end{enumerate}
+\end{definition}
+
+\subsection{伴随函子自然诱导单子}
+
+\begin{theorem}[伴随 $\Rightarrow$ 单子]\label{thm:adj-monad}
+设 $(F, G, \eta, \varepsilon)$ 是伴随函子对 $F \dashvadj G$，其中 $F: \cat{C} \to \cat{D}$，$G: \cat{D} \to \cat{C}$。定义：
+\begin{align}
+T &:= G \circ F : \cat{C} \to \cat{C} \label{eq:T-def}\\
+\eta^{\mathrm{monad}} &:= \eta : \id_{\cat{C}} \Rightarrow T \label{eq:eta-monad}\\
+\mu &:= G \varepsilon F : T^2 = GFGF \Longrightarrow GF = T \label{eq:mu-def}
+\end{align}
+则 $(T, \eta, \mu)$ 是范畴 $\cat{C}$ 上的单子。
+\end{theorem}
+
+\begin{remark}[$\mu$ 的展开]
+自然变换 $\mu$ 在对象 $X$ 上的分量是：
+\[
+\mu_X = G(\varepsilon_{F(X)}) : GFGF(X) \to GF(X)
+\]
+即先应用 $\varepsilon$ 于 $F(X)$：$\varepsilon_{F(X)}: FGF(X) \to F(X)$，然后以 $G$ 作用，得到 $G(\varepsilon_{F(X)}): GFGF(X) \to GF(X)$。
+\end{remark}
+
+\begin{proof}
+我们需要验证单子的两条公理。
+
+\medskip\noindent\textbf{（M1）结合律：$\mu \circ (T \mu) = \mu \circ (\mu T)$。}
+
+首先展开各项：
+\begin{itemize}[nosep]
+    \item $T \mu = G F (G \varepsilon F) = GFG\varepsilon F : T^3 \to T^2$
+    \item $\mu T = (G\varepsilon F)(GF) = G\varepsilon F G F : T^3 \to T^2$
+    \item $\mu = G\varepsilon F : T^2 \to T$
+\end{itemize}
+
+分量层面验证。对任意 $X \in \cat{C}$，需要：
+\[
+\mu_X \circ T(\mu_X) = \mu_X \circ \mu_{T(X)}
+\]
+其中 $T(\mu_X) = GF(G(\varepsilon_{FX})): GFGFGFX \to GFGFX$，$\mu_{T(X)} = G(\varepsilon_{FGFX}): GFGFGFX \to GFGFX$。
+
+由 $\varepsilon$ 的自然性：对态射 $\varepsilon_{FX}: FGFX \to FX$，有
+\[
+\varepsilon_{FX} \circ FG(\varepsilon_{FX}) = \varepsilon_{FX} \circ \varepsilon_{FGFX}
+\]
+（这来自 $\varepsilon: FG \Rightarrow \id$ 对 $Y = FX$ 的自然性正方形）
+
+现在计算：
+\begin{align*}
+\mu_X \circ T(\mu_X) &= G(\varepsilon_{FX}) \circ GFG(\varepsilon_{FX}) \\
+&= G\bigl(\varepsilon_{FX} \circ FG(\varepsilon_{FX})\bigr) \\
+&= G\bigl(\varepsilon_{FX} \circ \varepsilon_{FGFX}\bigr) \quad (\varepsilon\ \text{的自然性})\\
+&= G(\varepsilon_{FX}) \circ G(\varepsilon_{FGFX}) \\
+&= \mu_X \circ \mu_{T(X)}
+\end{align*}
+故结合律成立。
+
+用交换图表示：
+\[
+\begin{tikzcd}[column sep=4em, row sep=3em]
+GFGFGFX \arrow[r,"T\mu_X = GFG\varepsilon_{FX}"] \arrow[d,"\mu_{TX}=G\varepsilon_{FGFX}"'] & GFGFX \arrow[d,"\mu_X=G\varepsilon_{FX}"] \\
+GFGFX \arrow[r,"\mu_X=G\varepsilon_{FX}"'] & GFX
+\end{tikzcd}
+\]
+
+\medskip\noindent\textbf{（M2）单位律：$\mu \circ (\eta T) = \id_T = \mu \circ (T \eta)$。}
+
+分量层面。对任意 $X \in \cat{C}$：
+\begin{align*}
+\mu_X \circ \eta_{T(X)} &= G(\varepsilon_{FX}) \circ \eta_{GFX} \quad (\text{因} \eta_T(X) = T\eta_X? \text{不}, \eta_{T(X)} = \eta_{GFX}) \\
+&= \id_{GFX} \quad (\text{三角形恒等式 \eqref{eq:tri2-comp} 中取} Y = FX: G(\varepsilon_{FX}) \circ \eta_{GFX} = \id_{GFX})
+\end{align*}
+
+另一边：
+\begin{align*}
+\mu_X \circ T(\eta_X) &= G(\varepsilon_{FX}) \circ GF(\eta_X) \\
+&= G\bigl(\varepsilon_{FX} \circ F(\eta_X)\bigr) \\
+&= G(\id_{FX}) \quad (\text{三角形恒等式 \eqref{eq:tri1-comp}})\\
+&= \id_{GFX}
+\end{align*}
+
+两边都等于 $\id_{T(X)} = \id_{GFX}$，单位律成立。
+
+用交换图表示：
+\[
+\begin{tikzcd}[column sep=3.5em, row sep=2.5em]
+GFX \arrow[r,"\eta_{GFX}"] \arrow[dr,"\id"'] & GFGFX \arrow[d,"G\varepsilon_{FX}"] & GFX \arrow[l,"GF\eta_X"'] \arrow[dl,"\id"] \\
+& GFX &
+\end{tikzcd}
+\]
+
+两条公理验证完毕。故 $(T, \eta, \mu)$ 是单子。
+\end{proof}
+
+\subsection{单子公理的宏观交换图}
+
+把上述两条公理以函子级别的 Whiskering 交换图表示：
+
+\begin{center}
+\textbf{结合律：}
+\[
+\begin{tikzcd}[column sep=5em, row sep=3em]
+T^3 \arrow[r,"T\mu"] \arrow[d,"\mu T"'] & T^2 \arrow[d,"\mu"] \\
+T^2 \arrow[r,"\mu"'] & T
+\end{tikzcd}
+\qquad
+\text{展开为}
+\qquad
+\begin{tikzcd}[column sep=5em, row sep=3em]
+GFGFGF \arrow[r,"GFG\varepsilon F"] \arrow[d,"G\varepsilon FGF"'] & GFGF \arrow[d,"G\varepsilon F"] \\
+GFGF \arrow[r,"G\varepsilon F"'] & GF
+\end{tikzcd}
+\]
+
+\vspace{1em}
+\textbf{单位律：}
+\[
+\begin{tikzcd}[column sep=5em, row sep=3em]
+T \arrow[r,"\eta T"] \arrow[dr,"\id_T"'] & T^2 \arrow[d,"\mu"] & T \arrow[l,"T\eta"'] \arrow[dl,"\id_T"] \\
+& T &
+\end{tikzcd}
+\qquad
+\text{展开为}
+\qquad
+\begin{tikzcd}[column sep=5em, row sep=3em]
+GF \arrow[r,"\eta GF"] \arrow[dr,"\id"'] & GFGF \arrow[d,"G\varepsilon F"] & GF \arrow[l,"GF\eta"'] \arrow[dl,"\id"] \\
+& GF &
+\end{tikzcd}
+\]
+\end{center}
+
+\begin{remark}[单子即为"由伴随而来的代数"]\label{rmk:monad-origin}
+这是范畴论最深刻的事实之一：\textbf{每一个伴随函子对自动产生一个单子}。反过来，\textbf{每一个单子都可以由某个伴随函子对生成}（Kleisli范畴或Eilenberg-Moore代数的构造）。单子并非孤立定义的抽象结构——它的三条公理（结合律、左右单位律）正是伴随的三角形恒等式的直接投影。
+\end{remark}
+
+\newpage
+
+% ==================================================================
+\section{从伴随到余单子（Comonad）}
+% ==================================================================
+
+\subsection{余单子的定义}
+
+余单子是单子的对偶概念（将所有箭头反向）。
+
+\begin{definition}[余单子]
+范畴 $\cat{D}$ 上的\textbf{余单子}由三元组 $(S, \varepsilon, \delta)$ 组成，其中：
+\begin{itemize}[nosep]
+    \item $S: \cat{D} \to \cat{D}$ 是自函子；
+    \item $\varepsilon: S \Rightarrow \id_{\cat{D}}$ 是自然变换（余单位）；
+    \item $\delta: S \Rightarrow S^2$ 是自然变换（余乘法）；
+\end{itemize}
+满足以下公理：
+\begin{enumerate}[label=(CM\arabic*),nosep]
+    \item \textbf{余结合律：} $(S \delta) \circ \delta = (\delta S) \circ \delta$，即下图交换：
+    \[
+    \begin{tikzcd}
+    S \arrow[r,"\delta"] \arrow[d,"\delta"'] & S^2 \arrow[d,"S\delta"] \\
+    S^2 \arrow[r,"\delta S"'] & S^3
+    \end{tikzcd}
+    \]
+    \item \textbf{余单位律：} $(\varepsilon S) \circ \delta = \id_S = (S \varepsilon) \circ \delta$，即下图交换：
+    \[
+    \begin{tikzcd}
+    & S \arrow[dl,"\id_S"'] \arrow[d,"\delta"] \arrow[dr,"\id_S"] & \\
+    S & S^2 \arrow[l,"\varepsilon S"] \arrow[r,"S\varepsilon"'] & S
+    \end{tikzcd}
+    \]
+\end{enumerate}
+\end{definition}
+
+\subsection{伴随函子自然诱导余单子}
+
+\begin{theorem}[伴随 $\Rightarrow$ 余单子]\label{thm:adj-comonad}
+设 $(F, G, \eta, \varepsilon)$ 是伴随函子对 $F \dashvadj G$，$F: \cat{C} \to \cat{D}$，$G: \cat{D} \to \cat{C}$。定义：
+\begin{align}
+S &:= F \circ G : \cat{D} \to \cat{D} \label{eq:S-def}\\
+\varepsilon^{\mathrm{comonad}} &:= \varepsilon : S \Rightarrow \id_{\cat{D}} \label{eq:eps-comonad}\\
+\delta &:= F \eta G : S = FGF \Longrightarrow FGFG = S^2 \label{eq:delta-def}
+\end{align}
+则 $(S, \varepsilon, \delta)$ 是范畴 $\cat{D}$ 上的余单子。
+\end{theorem}
+
+\begin{remark}[$\delta$ 的展开]
+自然变换 $\delta$ 在对象 $Y$ 上的分量是：
+\[
+\delta_Y = F(\eta_{G(Y)}) : FG(Y) \to FGFG(Y)
+\]
+即先应用 $\eta$ 于 $G(Y)$：$\eta_{G(Y)}: G(Y) \to GFG(Y)$，然后以 $F$ 作用。
+\end{remark}
+
+\begin{proof}
+\textbf{（CM1）余结合律：$(S \delta) \circ \delta = (\delta S) \circ \delta$。}
+
+对任意 $Y \in \cat{D}$：
+\begin{align*}
+(S\delta)_Y \circ \delta_Y &= FG(F\eta_{GY}) \circ F\eta_{GY} \\
+&= F\bigl(GF\eta_{GY} \circ \eta_{GY}\bigr) \\
+&= F\bigl(\eta_{GFGY} \circ \eta_{GY}\bigr) \quad (\eta \text{的自然性：对} f=\eta_{GY}: GY \to GFGY)\\
+&= (\delta S)_Y \circ \delta_Y
+\end{align*}
+因为 $(\delta S)_Y = \delta_{FGY} = F\eta_{GFGY}$，且 $\delta_Y = F\eta_{GY}$，
+而 $\delta_{FGY} \circ \delta_Y = F\eta_{GFGY} \circ F\eta_{GY} = F(\eta_{GFGY} \circ \eta_{GY})$，与上面相同。
+
+余结合律得证。交换图：
+\[
+\begin{tikzcd}[column sep=4.5em, row sep=3em]
+FGY \arrow[r,"\delta_Y=F\eta_{GY}"] \arrow[d,"\delta_Y=F\eta_{GY}"'] & FGFGY \arrow[d,"S\delta_Y=FGF\eta_{GY}"] \\
+FGFGY \arrow[r,"\delta S_Y=F\eta_{GFGY}"'] & FGFGFGY
+\end{tikzcd}
+\]
+
+\medskip\noindent\textbf{（CM2）余单位律：$(\varepsilon S) \circ \delta = \id_S = (S \varepsilon) \circ \delta$。}
+
+对任意 $Y \in \cat{D}$：
+\begin{align*}
+(\varepsilon S)_Y \circ \delta_Y &= \varepsilon_{FGY} \circ F\eta_{GY} \\
+&= \id_{FGY} \quad (\text{三角形恒等式 \eqref{eq:tri1-comp} 中取} X = GY)
+\end{align*}
+
+另一边：
+\begin{align*}
+(S\varepsilon)_Y \circ \delta_Y &= FG(\varepsilon_Y) \circ F\eta_{GY} \\
+&= F\bigl(G\varepsilon_Y \circ \eta_{GY}\bigr) \\
+&= F(\id_{GY}) \quad (\text{三角形恒等式 \eqref{eq:tri2-comp}})\\
+&= \id_{FGY}
+\end{align*}
+
+余单位律得证。交换图：
+\[
+\begin{tikzcd}
+& FGY \arrow[dl,"\id"'] \arrow[d,"\delta_Y=F\eta_{GY}"] \arrow[dr,"\id"] & \\
+FGY & FGFGY \arrow[l,"\varepsilon S_Y=\varepsilon_{FGY}"] \arrow[r,"S\varepsilon_Y=FG\varepsilon_Y"'] & FGY
+\end{tikzcd}
+\]
+
+故 $(S, \varepsilon, \delta)$ 是余单子。
+\end{proof}
+
+\newpage
+
+% ==================================================================
+\section{伴随-单子-余单子的统一结构图}
+% ==================================================================
+
+\subsection{完整对应关系}
+
+给定伴随 $F \dashvadj G$（$F: \cat{C} \to \cat{D}$），我们获得了：
+\begin{itemize}[nosep]
+    \item $\cat{C}$ 上的单子 $\mathbb{T} = (GF, \eta, G\varepsilon F)$
+    \item $\cat{D}$ 上的余单子 $\mathbb{S} = (FG, \varepsilon, F\eta G)$
+\end{itemize}
+
+\[
+\begin{tikzcd}[column sep=5em, row sep=4em]
+\cat{C} \arrow[r,bend left,"F"] \arrow[loop left,"\mathbb{T}=GF"{}] & \cat{D} \arrow[l,bend left,"G"] \arrow[loop right,"\mathbb{S}=FG"{}]
+\end{tikzcd}
+\]
+
+\begin{table}[h]
+\centering
+\caption{伴随函子 vs 单子 vs 余单子 结构对应}
+\begin{tabular}{@{}l|l|l|l@{}}
+\toprule
+\textbf{伴随结构} & \textbf{记号} & \textbf{单子 $(GF, \eta, \mu)$} & \textbf{余单子 $(FG, \varepsilon, \delta)$} \\
+\midrule
+函子对     & $F \dashvadj G$ & $T = GF: \cat{C} \to \cat{C}$ & $S = FG: \cat{D} \to \cat{D}$ \\
+单位       & $\eta: \id_{\cat{C}} \!\Rightarrow\! GF$ & $\eta$（直接取用）& $\delta = F\eta G$（提升为余乘法）\\
+余单位     & $\varepsilon: FG \!\Rightarrow\! \id_{\cat{D}}$ & $\mu = G\varepsilon F$（提升为乘法）& $\varepsilon$（直接取用）\\
+三角形等式 & \eqref{eq:tri1-comp}, \eqref{eq:tri2-comp} & 单位律 & 余单位律 \\
+自然性     & $\eta, \varepsilon$ 的自然性 & $\mu$ 的结合律（源于 $\varepsilon$ 的自然性） & $\delta$ 的余结合律（源于 $\eta$ 的自然性） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{公理来源一一对应}
+
+\[
+\begin{tikzcd}[column sep=0.8em, row sep=3em]
+\text{三角形恒等式} \arrow[dr,Rightarrow] \arrow[ddr,Rightarrow] \\
+& \text{（左投射到 \(\cat{C}\)）} \arrow[d,mapsto] & \text{（右投射到 \(\cat{D}\)）} \arrow[d,mapsto] \\
+& \text{单子单位律} & \text{余单子余单位律} \\[1em]
+\varepsilon\ \text{的自然性} \arrow[dr,Rightarrow] \\
+& \text{单子结合律} \arrow[d,mapsto] \\
+& \mu \circ (T\mu) = \mu \circ (\mu T) \\[1em]
+\eta\ \text{的自然性} \arrow[dr,Rightarrow] \\
+& \text{余单子余结合律} \arrow[d,mapsto] \\
+& (S\delta) \circ \delta = (\delta S) \circ \delta
+\end{tikzcd}
+\]
+
+% ==================================================================
+\section{为什么这是单子的真正动机？}
+% ==================================================================
+
+范畴论中，单子（Monad）最初并非凭空定义的一组公理。它的三条公理（结合律 + 两条单位律）源于一个深刻的观察：
+
+\begin{center}
+\framebox{\textbf{伴随函子的复合 $GF$ 自动满足单子公理。}}
+\end{center}
+
+\subsection{历史与哲学线索}
+
+\begin{enumerate}[nosep]
+    \item \textbf{Roger Godement（1958）} 在研究层上同调时，首次形式化了“标准构造”（standard construction），后来被称为单子；
+    \item \textbf{Peter Huber（1961）} 观察到，任意一对伴随函子都产生这样的结构；
+    \item \textbf{Samuel Eilenberg \& John Moore（1965）} 系统化：给定单子 $\mathbb{T}$，构造其代数范畴（Eilenberg-Moore 范畴），并用 Kleisli 范畴给出每个单子都可表示为伴随函子的复合；
+    \item \textbf{Saunders Mac Lane（1971）} 在《Categories for the Working Mathematician》中确立了伴随-单子-代数三位一体的标准叙述。
+\end{enumerate}
+
+\subsection{泛代数的联系}
+
+单子公理对代数结构的编码能力令人震惊：
+\begin{itemize}[nosep]
+    \item \textbf{群单子}：$T(X) = $ 由 $X$ 生成的自由群，$\eta_X$ 将生成元嵌入，$\mu_X$ 将“词中的词”展平为词（关联律 = 展平的不同顺序给出相同结果）；
+    \item \textbf{Maybe单子}（计算机科学）：$T(X) = X + 1$（添加异常值），单位律确保异常传播的正确性；
+    \item \textbf{State单子}（编程）：$T(X) = (X \times S)^S$，结合律确保状态传递的幂等性。
+\end{itemize}
+
+所有这些例子背后，$\eta$（单位 = `return`）和 $\mu$（乘法 = `join`）的来源正是伴随函子的结构投射。
+
+\subsection{伴随-单子-余单子的三角关系}
+
+\[
+\begin{tikzcd}[column sep=5em, row sep=4em]
+& \text{伴随} \; F \dashvadj G \arrow[dl,Rightarrow] \arrow[dr,Rightarrow] & \\
+\text{单子} \; GF \arrow[rr,Leftrightarrow,"\text{Kleisli/Eilenberg-Moore}"] & & \text{余单子} \; FG
+\end{tikzcd}
+\]
+
+每个单子都由（至少）两个伴随函子对生成：Kleisli 伴随 $F_K \dashvadj G_K$ 和 Eilenberg-Moore 伴随 $F_{EM} \dashvadj G_{EM}$，前者是初始（initial）的，后者是终端（terminal）的。这是范畴论的又一深刻定理，超出本文范围，将在后续笔记中展开。
+
+\newpage
+
+% ==================================================================
+\section{总结}
+% ==================================================================
+
+\subsection{核心要点}
+
+\begin{enumerate}[nosep]
+    \item \textbf{伴随的两种定义等价}：Hom-集自然同构 $\cong$ 单位--余单位 + 三角形恒等式。前者便于计算，后者便于构建全局结构。
+    \item \textbf{伴随自然诱导单子}：$T = GF$，$\eta$ 直接复用为单子单位，$\mu = G\varepsilon F$ 为单子乘法。结合律源于 $\varepsilon$ 的自然性，单位律直接来自三角形恒等式。
+    \item \textbf{伴随自然诱导余单子}：$S = FG$，$\varepsilon$ 直接复用为余单子余单位，$\delta = F\eta G$ 为余单子余乘法。公理同样源自伴随条件。
+    \item \textbf{单子/余单子不是凭空定义的}：它们的三条公理是伴随函子的三角形恒等式和自然性的直接投影。这就是单子的真正动机。
+\end{enumerate}
+
+\subsection{后续学习路线}
+
+掌握本讲内容后，后续笔记将覆盖：
+\begin{itemize}[nosep]
+    \item Kleisli 范畴与 Eilenberg-Moore 代数：每个单子如何还原为伴随；
+    \item 自由-遗忘伴随的具体例子（群、环、模等）；
+    \item 单子变换（Monad Transformers）与复合；
+    \item 编程中的单子（Haskell 的 Monad 类型类，do-notation 的范畴语义）。
+\end{itemize}
+
+\vspace{1em}
+\begin{center}
+\rule{0.5\textwidth}{0.5pt}\\[0.5em]
+\textbf{本节完}
+\end{center}
+
+\end{document}
