@@ -1,0 +1,486 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+
+% ==================== 数学与符号宏包 ====================
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+\usepackage{mathrsfs}
+\usepackage{bbm}
+\usepackage{bm}
+\usepackage{stmaryrd}
+
+% ==================== 图形与绘图 ====================
+\usepackage{tikz-cd}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes,positioning,matrix,fit,backgrounds,calc,decorations.pathmorphing,decorations.markings}
+
+% ==================== 页面布局 ====================
+\usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+
+% ==================== 页眉页脚 ====================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small 范畴深度学习笔记}
+\fancyhead[R]{\small 自由单子与 Adámek 构造}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{15pt}
+
+% ==================== 超链接与引用 ====================
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+% ==================== 定理环境 ====================
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{定义}[section]
+\newtheorem{example}{例}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{proposition}{命题}[section]
+\newtheorem{lemma}{引理}[section]
+\newtheorem{corollary}{推论}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{注记}[section]
+
+% ==================== 自定义命令 ====================
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\cat}[1]{\mathbf{#1}}
+\newcommand{\Set}{\cat{Set}}
+\newcommand{\Cat}{\cat{Cat}}
+\newcommand{\op}[1]{#1^{\mathrm{op}}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\Ob}{\mathrm{Ob}}
+\newcommand{\Mor}{\mathrm{Mor}}
+\newcommand{\Hom}{\mathrm{Hom}}
+\newcommand{\colim}{\operatorname{colim}}
+\newcommand{\dashvadj}{\dashv}
+\newcommand{\Endo}{\mathbf{Endo}}
+\newcommand{\Mnd}{\mathbf{Mnd}}
+\newcommand{\FreeMnd}{\mathrm{FreeMnd}}
+\newcommand{\Alg}{\mathbf{Alg}}
+\newcommand{\Ord}{\mathbf{Ord}}
+
+\begin{document}
+
+\title{\heiti 自由单子与 Adámek 构造}
+\author{\kaishu 范畴深度学习笔记系列}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+本文从范畴论的严格视角出发，系统阐述\textbf{自由单子 (Free Monad)} 的伴随刻画与构造方法。
+首先，我们定义自函子范畴 $\Endo(\cat{C})$ 与单子范畴 $\Mnd(\cat{C})$，
+证明遗忘函子 $U: \Mnd(\cat{C}) \to \Endo(\cat{C})$ 的左伴随即为自由单子函子 $\FreeMnd$。
+其次，我们详细展开\textbf{Adámek 构造 (1974)}：
+利用超穷归纳法与 $\kappa$-过滤余极限，为每个自函子 $F$ 严格构造其自由单子 $T = \FreeMnd(F)$。
+最后，我们回溯集合论基础，给出\textbf{冯·诺伊曼序数}与\textbf{序数范畴}的严格定义，以阐明超穷序列的数学根基。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ================================================
+\section{前置知识：自函子范畴与单子范畴}
+% ================================================
+
+在进入自由单子的构造之前，我们需要严格界定参与伴随关系的两个范畴。
+
+\begin{definition}[自函子范畴 $\Endo(\cat{C})$]
+设 $\cat{C}$ 为范畴。\textbf{自函子范畴} $\Endo(\cat{C})$ 定义为：
+\begin{itemize}
+    \item \textbf{对象}：所有自函子 $F: \cat{C} \to \cat{C}$；
+    \item \textbf{态射}：自函子之间的自然变换 $\alpha: F \Rightarrow G$；
+    \item \textbf{复合}：自然变换的纵向合成，恒等态射为恒等自然变换。
+\end{itemize}
+$\Endo(\cat{C})$ 关于自然变换的纵向合成构成一个严格 2-范畴，其 2-细胞由自然变换之间的修改 (modification) 给出。
+在本笔记中，我们仅需其作为普通范畴的结构。
+\end{definition}
+
+\begin{definition}[单子范畴 $\Mnd(\cat{C})$]
+设 $\cat{C}$ 为范畴。\textbf{单子范畴} $\Mnd(\cat{C})$ 定义为：
+\begin{itemize}
+    \item \textbf{对象}：$\cat{C}$ 上的单子 $(T, \eta, \mu)$，其中 $T: \cat{C} \to \cat{C}$ 为自函子，
+          $\eta: \Id_{\cat{C}} \Rightarrow T$ 为单位元，$\mu: T \circ T \Rightarrow T$ 为乘法，
+          满足单位律与结合律；
+    \item \textbf{态射}：单子之间的态射 (monad morphism)，即满足与 $\eta, \mu$ 兼容的自然变换 $\phi: T \Rightarrow S$。
+\end{itemize}
+\end{definition}
+
+\begin{definition}[遗忘函子 $U$]
+定义\textbf{遗忘函子} $U: \Mnd(\cat{C}) \to \Endo(\cat{C})$ 为：
+\[
+U(T, \eta, \mu) = T, \qquad U(\phi) = \phi
+\]
+即遗忘单子的单位元与乘法结构，仅保留其底层自函子。
+\end{definition}
+
+% ================================================
+\section{自由单子的伴随刻画}
+% ================================================
+
+\begin{theorem}[自由单子函子的存在性 (Kelly, 1980)]
+设 $\cat{C}$ 为完备且余完备的范畴，且 $\cat{C}$ 上存在自由代数。则遗忘函子 $U: \Mnd(\cat{C}) \to \Endo(\cat{C})$ 
+有\textbf{左伴随}，记作 $\FreeMnd: \Endo(\cat{C}) \to \Mnd(\cat{C})$，即
+\[
+\FreeMnd \dashvadj U
+\]
+对任意自函子 $F \in \Endo(\cat{C})$，$\FreeMnd(F)$ 称为 $F$ 上的\textbf{自由单子}。
+\end{theorem}
+
+\begin{remark}
+伴随关系 $\FreeMnd \dashvadj U$ 意味着对任意自函子 $F$ 和任意单子 $S$，存在自然双射：
+\[
+\Hom_{\Mnd(\cat{C})}(\FreeMnd(F), S) \cong \Hom_{\Endo(\cat{C})}(F, U(S))
+\]
+这正是自由构造的泛性质：从 $F$ 到任意单子 $S$ 的底层自函子的自函子态射，唯一地扩张为从 $\FreeMnd(F)$ 到 $S$ 的单子态射。
+\end{remark}
+
+\begin{remark}
+这里区别于经典的"伴随函子诱导单子"定理。经典定理指出：若有一对伴随 $L \dashvadj R$（其中 $L: \cat{C} \to \cat{D}$, $R: \cat{D} \to \cat{C}$），
+则 $R \circ L$ 是 $\cat{C}$ 上的单子。而自由单子语境下的伴随发生在\textbf{更高一个层级}：
+自函子范畴与单子范畴之间。自由单子本身的\textbf{存在性}是伴随关系的产物，而非给定伴随后得到的结果。
+\end{remark}
+
+% ================================================
+\section{Adámek 构造：超穷归纳法与余极限}
+% ================================================
+
+本节展开 Adámek (1974) 的经典构造：利用超穷序列与余极限，从自函子 $F$ 出发，在适当的完备性假设下严格构造自由单子 $\FreeMnd(F)$。
+我们从构造自由 $F$-代数出发，由此自然诱导出自由单子。
+
+\subsection{预备假设}
+
+在整个构造中，我们假设：
+\begin{itemize}
+    \item $\cat{C}$ 是\textbf{完备且余完备}的范畴（拥有所有小极限与余极限）；
+    \item $F: \cat{C} \to \cat{C}$ 是自函子，且 $F$ \textbf{保持 $\kappa$-过滤余极限}，其中 $\kappa$ 为某个正则基数；
+    \item 取定 $\cat{C}$ 中的对象 $X$，目标是构造一个对象 $T(X)$ 及态射 $a_X: F(T(X)) \to T(X)$，
+          使其构成\textbf{自由 $F$-代数}。
+\end{itemize}
+
+\subsection{超穷序列的构造}
+
+我们定义一个函子 $W: \kappa \to \cat{C}$（其中序数 $\kappa$ 视为偏序范畴，详见第 \ref{sec:ordinal} 节），通过超穷归纳法定义对象序列 $\{W_\alpha\}_{\alpha < \kappa}$ 及连接态射。
+
+\begin{definition}[超穷序列的归纳定义]\label{def:transfinite}
+\textbf{初始步 ($\alpha = 0$)}：
+\[
+W_0 = X
+\]
+
+\textbf{后继步 ($\alpha \mapsto \alpha+1$)}：假设已定义 $W_\alpha$，定义
+\[
+W_{\alpha+1} = X \coprod F(W_\alpha)
+\]
+其中 $\coprod$ 为 $\cat{C}$ 中的共积 (coproduct)。连接态射定义为：
+\begin{itemize}
+    \item $w_{0,1}: W_0 \to W_1$ 为共积的典范入射 $\mathrm{in}_1: X \to X \coprod F(X)$；
+    \item 对一般 $\alpha$，$w_{\alpha+1, \alpha+2}: W_{\alpha+1} \to W_{\alpha+2}$ 由下式给出：
+    \[
+    w_{\alpha+1, \alpha+2} = \Id_X \coprod F(w_{\alpha, \alpha+1})
+    \]
+\end{itemize}
+
+\textbf{极限步 ($\lambda$ 为极限序数)}：定义
+\[
+W_\lambda = \colim_{\alpha < \lambda} W_\alpha
+\]
+连接态射 $w_{\alpha, \lambda}$ 由余极限的余锥 (cocone) 自然给出。
+\end{definition}
+
+\begin{remark}
+共积 $X \coprod F(W_\alpha)$ 的泛性质保证了上述归纳定义的良定性。直观上，$W_\alpha$ 编码了"最多 $\alpha$ 层 $F$ 嵌套"的信息：
+\begin{align*}
+W_0 &= X \\
+W_1 &= X + F(X) \\
+W_2 &= X + F(X + F(X)) \\
+&\;\;\vdots
+\end{align*}
+但严格来说，这一直观仅在后继序数步成立；在极限步，我们通过取余极限来"收拢"所有之前的信息。
+\end{remark}
+
+\subsection{收敛性论证}
+
+上述序列在到达 $\kappa$ 时收敛，这是整个构造的核心。
+
+\begin{proposition}[收敛性]
+定义 $T(X) = W_\kappa = \colim_{\alpha < \kappa} W_\alpha$。则存在典范同构
+\[
+\phi: X \coprod F(T(X)) \xrightarrow{\cong} T(X)
+\]
+\end{proposition}
+
+\begin{proof}
+考察 $W_{\kappa+1}$。根据后继步定义：
+\[
+W_{\kappa+1} = X \coprod F(W_\kappa) = X \coprod F(T(X))
+\]
+
+代入 $T(X) = W_\kappa = \colim_{\alpha < \kappa} W_\alpha$：
+\[
+W_{\kappa+1} = X \coprod F\!\left(\colim_{\alpha < \kappa} W_\alpha\right)
+\]
+
+由于 $F$ 保持 $\kappa$-过滤余极限（这是本定理的关键假设），极限与 $F$ 可交换：
+\[
+F\!\left(\colim_{\alpha < \kappa} W_\alpha\right) \cong \colim_{\alpha < \kappa} F(W_\alpha)
+\]
+
+共积本身也是余极限，因此与过滤余极限可交换：
+\[
+X \coprod \left(\colim_{\alpha < \kappa} F(W_\alpha)\right) \cong \colim_{\alpha < \kappa} \bigl(X \coprod F(W_\alpha)\bigr)
+\]
+
+注意到括号中的对象 $\bigl(X \coprod F(W_\alpha)\bigr)$ 恰为 $W_{\alpha+1}$，于是：
+\[
+W_{\kappa+1} \cong \colim_{\alpha < \kappa} W_{\alpha+1}
+\]
+
+指标集从 $\alpha$ 偏移到 $\alpha+1$ 不改变余极限对象（共尾性论证，cofinality）：
+\[
+\colim_{\alpha < \kappa} W_{\alpha+1} \cong \colim_{\alpha < \kappa} W_\alpha = W_\kappa = T(X)
+\]
+
+串联上述同构链，得到典范同构：
+\[
+\phi: X \coprod F(T(X)) = W_{\kappa+1} \xrightarrow{\cong} T(X)
+\]
+\end{proof}
+
+\subsection{从同构中提取代数结构}
+
+\begin{theorem}[自由 $F$-代数的结构]\label{thm:free-algebra}
+典范同构 $\phi: X \coprod F(T(X)) \xrightarrow{\cong} T(X)$ 分解为两个态射：
+\begin{enumerate}
+    \item \textbf{单位元} $\eta_X: X \to T(X)$，由共积 $X \coprod F(T(X))$ 的左侧入射经同构 $\phi$ 复合得到；
+    \item \textbf{代数结构映射} $a_X: F(T(X)) \to T(X)$，由共积的右侧入射经 $\phi$ 复合得到。
+\end{enumerate}
+且 $(T(X), a_X)$ 构成\textbf{自由 $F$-代数}，即对任意 $F$-代数 $(A, \alpha: F(A) \to A)$ 及态射 $f: X \to A$，
+存在唯一的 $F$-代数同态 $\hat{f}: T(X) \to A$ 使得下图交换：
+\[
+\begin{tikzcd}
+X \ar[r, "\eta_X"] \ar[rd, "f"'] & T(X) \ar[d, dashed, "\exists!\,\hat{f}"] & F(T(X)) \ar[l, "a_X"'] \ar[d, "F(\hat{f})"] \\
+& A & F(A) \ar[l, "\alpha"]
+\end{tikzcd}
+\]
+\end{theorem}
+
+\begin{proof}[证明概要]
+共积的泛性质保证了 $\phi$ 唯一分解为两个分量的和。泛性质的验证需通过对 $\kappa$ 的超穷归纳法完成：
+在每一步 $\alpha < \kappa$，构造部分映射 $\hat{f}_\alpha: W_\alpha \to A$，
+利用 $F$ 保持 $\kappa$-过滤余极限的性质确保归纳可以延续到极限序数，
+最终在 $W_\kappa = T(X)$ 处得到完整的 $\hat{f}$。
+\end{proof}
+
+\subsection{从自由代数到自由单子}
+
+当取 $X = \Id_{\cat{C}}$（视为自函子，或取任意对象 $A$ 并令 $X = A$），上述构造给出了对象层面的映射 $A \mapsto T(A)$。
+进一步可验证 $T$ 自然地成为一个自函子，且代数结构映射全体构成一个自然变换 $\mu: T \circ T \Rightarrow T$，
+与单位元 $\eta: \Id \Rightarrow T$ 一起满足单子公理。
+由此得到的单子 $(T, \eta, \mu)$ 即为 $\FreeMnd(F)$。
+
+\begin{theorem}[定理 5.1 的等价性]
+设 $F$ 为 $\cat{C}$ 上的自函子，$T = \FreeMnd(F)$ 为相应自由单子。则有范畴等价：
+\[
+\Alg_{\Mnd}(T) \simeq \Alg_{\Endo}(F)
+\]
+即：研究"自由单子 $T$ 的代数"与研究"普通自函子 $F$ 的代数"是完全等价的一回事。
+\end{theorem}
+
+\begin{remark}
+该等价的核心在于：$F$-代数结构映射 $a: F(A) \to A$ 仅指定了如何"消化"一层 $F$。
+借助自由单子的泛性质（超穷归纳/递归），这一层规则自动唯一地扩展到任意多层嵌套：$T(A) \to A$，
+且该扩展自动满足单子的单位律与结合律。两端信息的"信息量"完全相同。
+\end{remark}
+
+% ================================================
+\section{序数的严格集合论基础}
+\label{sec:ordinal}
+% ================================================
+
+Adámek 构造的核心运算对象是超穷序列 $W: \kappa \to \cat{C}$。
+欲使这一构造具有无可争议的数学严格性，必须回到\textbf{公理化集合论 (ZFC)}，
+给出序数与序数范畴的精确定义。本节梳理冯·诺伊曼序数的构造及其范畴化。
+
+\subsection{前置概念：传递集与严格良序}
+
+\begin{definition}[传递集 (Transitive Set)]
+一个集合 $A$ 称为\textbf{传递集}，当且仅当 $A$ 的每一个元素同时也是 $A$ 的子集：
+\[
+\forall x\,(x \in A \implies x \subseteq A)
+\]
+等价地，若 $y \in x$ 且 $x \in A$，则 $y \in A$。成员关系在此意义下具有"传递性"。
+\end{definition}
+
+\begin{definition}[严格良序关系 (Strict Well-Ordering)]
+集合 $A$ 上的二元关系 $<$ 称为\textbf{严格良序}，当且仅当满足：
+\begin{enumerate}
+    \item \textbf{非自反性}：$\forall x \in A$，并非 $x < x$；
+    \item \textbf{传递性}：$\forall x, y, z \in A$，若 $x < y$ 且 $y < z$，则 $x < z$；
+    \item \textbf{三分律}：$\forall x, y \in A$，恰有其一成立：$x < y$、$y < x$ 或 $x = y$；
+    \item \textbf{良基性}（核心属性）：$A$ 的任意非空子集 $S \subseteq A$ 在 $<$ 下均有极小元。
+\end{enumerate}
+\end{definition}
+
+\subsection{冯·诺伊曼序数}
+
+\begin{definition}[冯·诺伊曼序数 (von Neumann Ordinal)]
+一个集合 $\alpha$ 称为\textbf{序数}，当且仅当：
+\begin{enumerate}
+    \item $\alpha$ 是\textbf{传递集}；
+    \item $\alpha$ 被集合的\textbf{从属关系 $\in$} 严格良序化。
+\end{enumerate}
+\end{definition}
+
+\begin{remark}
+在冯·诺伊曼的构造中，一个序数\textbf{等于所有严格小于它的序数的集合}：
+\[
+\alpha = \{\beta \mid \beta < \alpha\}
+\]
+\end{remark}
+
+\begin{example}[序数的构造]
+\begin{align*}
+0 &= \varnothing \\
+1 &= \{0\} = \{\varnothing\} \\
+2 &= \{0, 1\} = \{\varnothing, \{\varnothing\}\} \\
+3 &= \{0, 1, 2\} = \{\varnothing, \{\varnothing\}, \{\varnothing, \{\varnothing\}\}\}
+\end{align*}
+一般地，\textbf{后继序数}：$\alpha + 1 = \alpha \cup \{\alpha\}$。
+
+\textbf{极限序数}：不是 $0$ 也不是后继序数的序数。其特点是等于它所有元素的并集：
+\[
+\lambda = \bigcup_{\beta < \lambda} \beta
+\]
+最小的无限序数为 $\omega = \{0, 1, 2, \dots\} = \bigcup_{n \in \omega} n$。
+\end{example}
+
+\begin{remark}
+序数类本身构成一个真类 (proper class)——由布拉利-福尔蒂悖论 (Burali-Forti paradox) 保证：
+不存在"所有序数的集合"。
+\end{remark}
+
+% ================================================
+\section{序数范畴的结构}
+\label{sec:ordinal-cat}
+% ================================================
+
+\begin{definition}[以序数 $\alpha$ 为指标范畴]
+给定一个序数 $\alpha$，将其视为\textbf{偏序范畴}：
+\begin{itemize}
+    \item \textbf{对象}：$\Ob(\alpha) = \{\beta \mid \beta < \alpha\}$（所有严格小于 $\alpha$ 的序数）；
+    \item \textbf{态射}：对 $\beta, \gamma < \alpha$，
+    \[
+    \Hom_\alpha(\beta, \gamma) =
+    \begin{cases}
+        \{\text{唯一态射 } \beta \to \gamma\}, & \text{若 } \beta \le \gamma \text{（即 } \beta \in \gamma \text{ 或 } \beta = \gamma\text{）} \\
+        \varnothing, & \text{若 } \beta > \gamma
+    \end{cases}
+    \]
+    \item \textbf{复合}：由序数大小关系的传递性唯一确定；
+    \item \textbf{恒等态射}：由自反性 $\beta \le \beta$ 给出。
+\end{itemize}
+\end{definition}
+
+\begin{definition}[全序数范畴 $\Ord$]
+由\textbf{所有序数}构成的范畴 $\Ord$：
+\begin{itemize}
+    \item \textbf{对象}：所有序数（构成真类，因此 $\Ord$ 是大范畴）；
+    \item \textbf{态射}：当且仅当 $\alpha \le \beta$ 时，存在唯一态射 $\alpha \to \beta$。
+\end{itemize}
+\end{definition}
+
+\begin{remark}
+序数范畴是偏序集作为范畴的标准构造的特例。在这一范畴中，
+每个 $\Hom$-集至多有一个元素，复合被大小关系的传递性唯一确定。
+这使得序数范畴成为研究"有向图表的极限/余极限"的理想指标范畴。
+\end{remark}
+
+\subsection{超穷序列作为函子}
+
+有了序数范畴的精确定义，我们可以回看 Adámek 构造中的超穷序列。
+
+\begin{definition}[超穷序列的函子化]
+给定序数 $\kappa$（视为范畴）和范畴 $\cat{C}$，一个\textbf{超穷序列}是从 $\kappa$ 到 $\cat{C}$ 的函子
+\[
+W: \kappa \to \cat{C}
+\]
+具体而言：
+\begin{itemize}
+    \item 将每个序数 $\alpha < \kappa$ 映为 $\cat{C}$ 中的对象 $W_\alpha$；
+    \item 将唯一态射 $\alpha \le \beta$ 映为 $\cat{C}$ 中的态射 $w_{\alpha, \beta}: W_\alpha \to W_\beta$；
+    \item 函子性确保 $w_{\beta, \gamma} \circ w_{\alpha, \beta} = w_{\alpha, \gamma}$ 且 $w_{\alpha, \alpha} = \Id_{W_\alpha}$。
+\end{itemize}
+\end{definition}
+
+至此，定义 \ref{def:transfinite} 中的归纳构造被严格形式化为：通过超穷归纳法定义一个函子 $W: \kappa \to \cat{C}$，
+使得 $W$ 在对象和态射层面的行为分别满足初始步、后继步和极限步的条件。
+在极限序数 $\lambda < \kappa$ 处，条件 $W_\lambda = \colim_{\alpha < \lambda} W_\alpha$ 恰好是说：
+$W_\lambda$ 与典范余锥一起构成函子 $W|_\lambda$ 的余极限。
+
+\subsection{正则基数 $\kappa$ 的角色}
+
+\begin{definition}[正则基数]
+一个基数 $\kappa$ 称为\textbf{正则的} (regular)，如果不存在长度小于 $\kappa$ 的序列使其共尾 (cofinal) 于 $\kappa$。
+等价地，$\kappa$ 不能表示为少于 $\kappa$ 个、每个基数均小于 $\kappa$ 的集合之并。
+\end{definition}
+
+\begin{remark}
+在 Adámek 构造中，我们要求 $F$ 保持 $\kappa$-过滤余极限。选择正则基数 $\kappa$ 的理由在于：
+$\kappa$ 自身的共尾性保证了余极限的"稳定点"恰好发生在 $\kappa$ 处——既不会更早（因为需要足够的迭代步数），
+也不会更晚（因为 $F$ 在 $\kappa$ 步时已经与余极限交换）。
+这一精妙的基数论证是确保构造终止且唯一的逻辑支柱。
+\end{remark}
+
+% ================================================
+\section{总结与展望}
+% ================================================
+
+\begin{theorem}[主定理总结]
+设 $\cat{C}$ 为完备且余完备的范畴，$F: \cat{C} \to \cat{C}$ 为保持 $\kappa$-过滤余极限的自函子。
+则：
+\begin{enumerate}
+    \item 遗忘函子 $U: \Mnd(\cat{C}) \to \Endo(\cat{C})$ 存在左伴随 $\FreeMnd$；
+    \item $\FreeMnd(F)$ 可通过 Adámek 构造显式给出：
+    \[
+    \FreeMnd(F)(X) = \colim_{\alpha < \kappa} W_\alpha
+    \]
+    其中 $W_\alpha$ 由超穷归纳法定义（定义 \ref{def:transfinite}）；
+    \item 存在范畴等价 $\Alg_{\Mnd}(\FreeMnd(F)) \simeq \Alg_{\Endo}(F)$。
+\end{enumerate}
+\end{theorem}
+
+\begin{remark}
+自由单子的构造不仅是范畴论中伴随函子理论的经典应用，也在函数式编程中扮演核心角色。
+在 Haskell 等语言中，自由单子将普通的函子（描述单个副作用操作）自动提升为单子（支持操作的组合与解释），
+其底层数学正是本文所述的 Adámek 构造在 $\Set$ 范畴（或更一般的笛卡尔闭范畴）中的具体体现。
+\end{remark}
+
+\nocite{*}
+\begin{thebibliography}{99}
+\bibitem{kelly1980} G.~M.~Kelly.
+\newblock A unified treatment of transfinite constructions for free algebras, free monoids, colimits, associated sheaves, and so on.
+\newblock \emph{Bulletin of the Australian Mathematical Society}, 22(1):1--83, 1980.
+
+\bibitem{adamek1974} J.~Ad\'amek.
+\newblock Free algebras and automata realizations in the language of categories.
+\newblock \emph{Commentationes Mathematicae Universitatis Carolinae}, 15(4):589--602, 1974.
+
+\bibitem{maclane} S.~Mac~Lane.
+\newblock \emph{Categories for the Working Mathematician}.
+\newblock Springer, 2nd edition, 1998.
+
+\bibitem{riehl} E.~Riehl.
+\newblock \emph{Category Theory in Context}.
+\newblock Dover Publications, 2016.
+
+\bibitem{borceux} F.~Borceux.
+\newblock \emph{Handbook of Categorical Algebra}, Volumes 1--3.
+\newblock Cambridge University Press, 1994.
+\end{thebibliography}
+
+\end{document}
