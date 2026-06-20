@@ -11,7 +11,10 @@
    - LaTeX 必须使用 `xelatex -interaction=nonstopmode -output-directory="目标子目录"`，且必须编译两次（第二次解决交叉引用和目录）。
 3. 🔒【核心安全红线】：绝对禁止执行 `git add .` 或 `git add -A`！必须采用"精确文件添加"，只手动 add 指定的目标 PDF 文件与根目录的配置文件。
 4. 🔒【资产保护红线】：绝对禁止以任何形式触碰、修改或删除根目录下的 `.clinerules` 和 `.gitignore` 文件。
-5. 遇到报错时，严禁盲目尝试重置（reset）或回退，停下来问用户。
+ 5. 遇到报错时，严禁盲目尝试重置（reset）或回退，停下来问用户。
+ 6. 🔒【.tex 源码保护规则】：精准清理步骤（第三步-2）中，.tex 源码文件的删除必须等到用户明确发指令"可以上传和清理了"之后才可执行。
+    在此之前，任何修改阶段的 .tex 文件都必须保留在本地，以便用户要求迭代修改时可以直接用 replace_in_file 进行增量编辑，而非被迫重建整个文件。
+    工作流逻辑：生成/修改 .tex → 编译 PDF → 用户验证 → 用户发令 → Git 推送并清理（含删除 .tex）。
 
 【工作流：按顺序执行，禁止跳步】
 
@@ -31,10 +34,24 @@
      - 五边形必须反复视觉核对：箭头标签要与数学对象匹配，方向不能反，`▷` 外推不能丢失。
    g) 【tikz-cd 箭头标签中 `\triangleright` 编译报错】：
       在 tikz-cd 的 `\arrow[..., "..."]` 标签内使用 `\triangleright`（来自 amssymb）时可能触发
-      `Missing $ inserted` 错误——即使理论上网址处于数学模式。此时需要检查 `\triangleright` 的当前定义；
-      若用 `\mathbin` 修饰或简化标签内容（如将复合标签分解为多行）仍无效，可在节点外定义独立箭头
-      规避。安全做法：优先让 `\triangleright` 出现在箭头本体（`\arrow[r, "\triangleright"]`），
-      而非嵌入带有多个构造器的复杂标签内部。
+      `Missing $ inserted` 错误。安全做法：源码顶部定义 `\newcommand{\triang}{\triangleright}`，
+      在 tikzcd 标签中统一使用 `\triang` 缩写。
+   h) 【tikz-cd 五边形布局规范】：
+      - 五边形交换图必须使用 `[row sep=large, column sep=small]` 产生宝塔状五边形布局，
+        严禁使用横向拉伸的矩形布局。
+      - 节点位置：第 1 行 1 列空 ; 第 1 行 2 列放顶层对象 ; 第 2 行 1 列放起点 ; 第 2 行 2 列空 ;
+        第 2 行 3 列放倒数第二节点 ; 第 3 行 1 列放底层中间节点 ; 第 3 行 3 列放终点。
+      - 标准模板见过往编译成功的五边形代码，不得随意修改行列跨度（\arrow[dr], \arrow[ur], 等）。
+   i) 【行内公式断行预防】：
+      凡包含 `\xrightarrow` 且标签文字超过 10 个字符的长推导公式，必须使用行间公式
+      `\[ ... \]` 居中展示，严禁塞入行内（`$...$`）。步骤列表中采用「文字说明 + 独立行间公式」
+      的排版模式。
+   j) 【tikzpicture 树节点防穿透】：
+      树状图（满二叉树示意图）中所有表示内部节点的 `\node[circle, draw, ...]` 必须追加
+      `fill=white, fill opacity=0.8`（或 `fill=white`），防止连线穿透圆形与内部文字/公式交叉。
+   k) 【`\ot` 与 `\triang` 缩写】：
+      源码顶部必须定义 `\newcommand{\ot}{\otimes}` 和 `\newcommand{\triang}{\triangleright}`，
+      全文统一使用缩写，提升可读性和 tikzcd 兼容性。
 - ⚠️【动态路径与命名规则】：
   获取系统当前时间，格式为 YYYY-MM-DD-HHmm。根据内容总结一个精准简短的中文标题。
   【保存路径】设为：`./categorical-deep-learning-notes/[时间]-[中文标题]`
