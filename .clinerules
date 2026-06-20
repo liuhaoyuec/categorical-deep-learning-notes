@@ -29,6 +29,12 @@
      - 作用五边形顶层走"先解包后穿透"路径：`((P⊗Q)⊗R)▷X` → `(P⊗Q)▷(R▷X)` → `P▷(Q▷(R▷X))`。
      - 底层走"先重组后解包"路径：`((P⊗Q)⊗R)▷X` → `(P⊗(Q⊗R))▷X` → `P▷((Q⊗R)▷X)` → `P▷(Q▷(R▷X))`（末箭为 `id_P ▷ μ_{Q,R,X}` 上行）。
      - 五边形必须反复视觉核对：箭头标签要与数学对象匹配，方向不能反，`▷` 外推不能丢失。
+   g) 【tikz-cd 箭头标签中 `\triangleright` 编译报错】：
+      在 tikz-cd 的 `\arrow[..., "..."]` 标签内使用 `\triangleright`（来自 amssymb）时可能触发
+      `Missing $ inserted` 错误——即使理论上网址处于数学模式。此时需要检查 `\triangleright` 的当前定义；
+      若用 `\mathbin` 修饰或简化标签内容（如将复合标签分解为多行）仍无效，可在节点外定义独立箭头
+      规避。安全做法：优先让 `\triangleright` 出现在箭头本体（`\arrow[r, "\triangleright"]`），
+      而非嵌入带有多个构造器的复杂标签内部。
 - ⚠️【动态路径与命名规则】：
   获取系统当前时间，格式为 YYYY-MM-DD-HHmm。根据内容总结一个精准简短的中文标题。
   【保存路径】设为：`./categorical-deep-learning-notes/[时间]-[中文标题]`
