@@ -22,6 +22,13 @@
   a) 页眉：`\geometry{a4paper, margin=2.5cm, headheight=14.5pt}`。
   b) 必须同时定义：`\newcommand{\Id}{\mathrm{Id}}` 和 `\newcommand{\id}{\mathrm{id}}`。
   c) 忽略 "Font shape ... undefined" 警告。
+  d) 【中文路径编译经验】：当 `-output-directory` 中含有中文字符时，`putenv` 可能因编码问题失败。
+     解决：先 `Set-Location` 进入目标子目录，再执行 `xelatex`（不加 `-output-directory` 参数），所有产物自然落在当前目录。
+  e) 【未定义命令常见遗漏】：`\Hom` 需定义为 `\operatorname{Hom}`；`\author{}` 必须存在（至少为空）以消除 LaTeX 警告。
+  f) 【tikz-cd 五边形交换图纪律】：
+     - 作用五边形顶层走"先解包后穿透"路径：`((P⊗Q)⊗R)▷X` → `(P⊗Q)▷(R▷X)` → `P▷(Q▷(R▷X))`。
+     - 底层走"先重组后解包"路径：`((P⊗Q)⊗R)▷X` → `(P⊗(Q⊗R))▷X` → `P▷((Q⊗R)▷X)` → `P▷(Q▷(R▷X))`（末箭为 `id_P ▷ μ_{Q,R,X}` 上行）。
+     - 五边形必须反复视觉核对：箭头标签要与数学对象匹配，方向不能反，`▷` 外推不能丢失。
 - ⚠️【动态路径与命名规则】：
   获取系统当前时间，格式为 YYYY-MM-DD-HHmm。根据内容总结一个精准简短的中文标题。
   【保存路径】设为：`./categorical-deep-learning-notes/[时间]-[中文标题]`
