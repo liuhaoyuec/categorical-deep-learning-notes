@@ -10,7 +10,7 @@
    - PowerShell 环境下优先使用 cmdlet（如 `Remove-Item`），而非 cmd 内部命令（如 `del`）。
     - LaTeX 必须编译两次（第二次解决交叉引用和目录）。编译方式见规则 d)。
 3. 🔒【核心安全红线】：绝对禁止执行 `git add .` 或 `git add -A`！必须采用"精确文件添加"，只手动 add 指定的目标 PDF 文件与根目录的配置文件。
-4. 🔒【资产保护红线】：绝对禁止以任何形式触碰、修改或删除根目录下的 `.clinerules` 和 `.gitignore` 文件。
+4. 🔒【资产保护红线】：禁止以任何形式触碰、修改或删除根目录下的 `.gitignore` 文件。`.clinerules` 的修改仅允许在「自我更新机制」流程下进行。
  5. 遇到报错时，严禁盲目尝试重置（reset）或回退，停下来问用户。
  6. 🔒【.tex 源码保护规则】：精准清理步骤（第三步-2）中，.tex 源码文件的删除必须等到用户明确发指令"可以上传和清理了"之后才可执行。
     在此之前，任何修改阶段的 .tex 文件都必须保留在本地，以便用户要求迭代修改时可以直接用 replace_in_file 进行增量编辑，而非被迫重建整个文件。
@@ -28,6 +28,11 @@
   d) 【中文路径编译经验】：当 `-output-directory` 中含有中文字符时，`putenv` 可能因编码问题失败。
      解决：先 `Set-Location` 进入目标子目录，再执行 `xelatex`（不加 `-output-directory` 参数），所有产物自然落在当前目录。
   e) 【未定义命令常见遗漏】：`\Hom` 需定义为 `\operatorname{Hom}`；`\author{}` 必须存在（至少为空）以消除 LaTeX 警告。
+    l) 【表格颜色编译错误预防】：当需要使用 `\rowcolor` 和 `\cellcolor` 时，必须加载 `\usepackage[table]{xcolor}`（加 `table` 选项），不能使用裸 `\usepackage{xcolor}`，否则触发 `Undefined control sequence \rowcolor` 错误。
+      另注意：包含公式的宽表格易触 `tabularx` 的 Overfull \hbox 警告，不影响输出可忽略。
+    m) 【Set-Location 后多命令串行执行】：由于禁止 `&&` 连接命令，当需要先 `Set-Location` 再执行多条命令时，使用 `;`（分号）在 PowerShell 中串行。示例：
+       `Set-Location "目标目录"; xelatex "文件.tex"; xelatex "文件.tex"`
+    n) 【编译报错后重试规范】：若首轮编译因宏包/语法错误中断，必须先用 `Stop-Process -Name xelatex -Force -ErrorAction SilentlyContinue` 清理残留进程，再重试编译。重试时建议加 `-interaction=nonstopmode` 跳过交互式报错提示。
    f) 【tikz-cd 作用范畴 ▷-五边形纪律】（仅适用于 Actegory 等含 `\triang` 的场景）：
      - 作用五边形顶层走"先解包后穿透"路径：`((P⊗Q)⊗R)▷X` → `(P⊗Q)▷(R▷X)` → `P▷(Q▷(R▷X))`。
      - 底层走"先重组后解包"路径：`((P⊗Q)⊗R)▷X` → `(P⊗(Q⊗R))▷X` → `P▷((Q⊗R)▷X)` → `P▷(Q▷(R▷X))`（末箭为 `id_P ▷ μ_{Q,R,X}` 上行）。
@@ -116,3 +121,8 @@
 <!--   - 动态路径规则：补充「4 位年份」说明，防止 Y2K 歧义 -->
 <!--   - 第三步-2：补充 ctexart 不产生 .out/.toc 的说明，防止 PathNotFound 误判 -->
 <!--   - 新增「自我更新机制」一节（从子目录 .clinerules 合并） -->
+<!-- 2026-06-24: 本次更新 -->
+<!--   - 规则 4：从「禁止触碰 .clinerules 和 .gitignore」改为「禁止触碰 .gitignore；.clinerules 仅允许在自我更新机制下修改」，消除规则 4 与自我更新机制的冲突 -->
+<!--   - 新增规则 l)：表格颜色编译错误预防（\usepackage[table]{xcolor} 而非裸 \usepackage{xcolor}），修复 \rowcolor undefined 崩溃 -->
+<!--   - 新增规则 m)：Set-Location 后多命令串行执行方案（用 ; 替代 &&），解决规则 2 禁止 && 与编译流程的矛盾 -->
+<!--   - 新增规则 n)：编译报错后重试规范（Stop-Process 清理残留 + -interaction=nonstopmode），防止首次失败残留进程干扰重试 -->
